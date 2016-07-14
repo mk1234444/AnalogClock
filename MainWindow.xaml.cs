@@ -3,9 +3,11 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+
 
 
 namespace AnalogClock
@@ -15,15 +17,21 @@ namespace AnalogClock
 	/// </summary>
 	public partial class MainWindow
 	{
-		Time time = new Time();
+        
+        Ticks ticks = new Ticks();
+        Time time = new Time() ;
+
+
 		bool? DateAtBottom;
 		public MainWindow()
 		{
+            time.Ticks = ticks;
 			InitializeComponent();
+            
    
 			this.DataContext = time;
 			  
-			var timer = new DispatcherTimer {Interval = TimeSpan.FromMilliseconds(150)};
+			var timer = new DispatcherTimer {Interval = TimeSpan.FromMilliseconds(100)};
 			timer.Tick += async (s, e) => {
 				var now = DateTime.Now;
 
@@ -31,9 +39,8 @@ namespace AnalogClock
 				txtDate.Text = date;
 				txtDay.Text = DateTime.Now.DayOfWeek.ToString();
 
-
-				time.Second = now.Second;
-				time.Minute = now.Minute;
+                time.Second = now.Second;
+                time.Minute = now.Minute;
 				time.Hour = now.Hour;
 				time.MilliSecond = now.Millisecond;
 				if (time.Minute == 0 && time.Second == 0 && (string)ClockGrid.Tag !="Chime")
@@ -61,14 +68,14 @@ namespace AnalogClock
 					ClockGrid.Tag = "";
 				}
 
-				if (time.Second == 59)
+				if ((time.Second == 59 && ticks.TickTypeValue == TickType.Smooth) || (time.Second == 0 && ticks.TickTypeValue == TickType.Second))
 					await StartAnimationAsync(FindResource("Storyboard12") as Storyboard);
-				else if (time.Second == 14)
-					await StartAnimationAsync(FindResource("Animate_3_1") as Storyboard);
-				else if (time.Second == 29)
-					await StartAnimationAsync(FindResource("Animate_6_1") as Storyboard);
-				else if (time.Second == 44)
-					await StartAnimationAsync(FindResource("Animate_9_1") as Storyboard);
+				else if ((time.Second == 14 && ticks.TickTypeValue == TickType.Smooth) || (time.Second == 15 && ticks.TickTypeValue == TickType.Second))
+					await StartAnimationAsync(FindResource("Animate_3_VerticalTransform") as Storyboard);
+				else if ((time.Second == 29 && ticks.TickTypeValue == TickType.Smooth) || (time.Second == 30 && ticks.TickTypeValue == TickType.Second))
+					await StartAnimationAsync(FindResource("Animate_6_1_Grow") as Storyboard);
+				else if ((time.Second == 44 && ticks.TickTypeValue == TickType.Smooth) || (time.Second == 45 && ticks.TickTypeValue == TickType.Second))
+					await StartAnimationAsync(FindResource("Animate_9_VerticalTransform") as Storyboard);
 				else if (time.Second == 5)
 					await StartAnimationAsync(FindResource("Animate1_1") as Storyboard);
 				else if (time.Second == 10)
@@ -160,20 +167,39 @@ namespace AnalogClock
 		{
 			this.Top = Properties.Settings.Default.settingsTop;
 			this.Left = Properties.Settings.Default.settingsLeft;
+            ticks.TickTypeValue = Properties.Settings.Default.settingsTickSmooth ? TickType.Smooth : TickType.Second;
 		}
 
 		private void window1_Closing(object sender, CancelEventArgs e)
 		{
 			Properties.Settings.Default.settingsLeft = this.Left;
 			Properties.Settings.Default.settingsTop = this.Top;
+            Properties.Settings.Default.settingsTickSmooth = ticks.TickTypeValue == TickType.Smooth;
 			Properties.Settings.Default.Save();
-		} 
-		#endregion
-	}
+		}
+        #endregion
 
-	public class Time:INotifyPropertyChanged
+        private void ellCenter_ToolTipOpening(object sender, System.Windows.Controls.ToolTipEventArgs e)
+        {
+            var tt = (ToolTip)(sender as System.Windows.Shapes.Ellipse).ToolTip;
+            ((tt.Content as Border).Child as TextBlock).Text = DateTime.Now.ToShortTimeString() + (DateTime.Now.Hour > 11 ?" PM":" AM");
+            
+        }
+
+        private void window1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) && e.Key == Key.T)
+            {
+                ticks.TickTypeValue = ticks.TickTypeValue == TickType.Smooth ? TickType.Second : TickType.Smooth;
+            }
+        }
+    }
+
+    public class Time:INotifyPropertyChanged
 	{
-		public bool Chime{get;set;}
+        public Ticks Ticks { get; set; }
+
+        public bool Chime{get;set;}
 		private double hourAngle;
 		public double HourAngle
 		{
@@ -247,23 +273,27 @@ namespace AnalogClock
 				SecondAngle = value * 6;
 				if (PropertyChanged != null)
 					PropertyChanged(this, new PropertyChangedEventArgs("Second"));
-			}
+              
+            }
 		}
 
 		private double milliSecond;
-		public double MilliSecond
-		{
-			get { return milliSecond; }
-			set
-			{
-				milliSecond = value;
-				SecondAngle = (Second + (milliSecond / 1000)) * 6;
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("MilliSecond"));
-			}
-		}
+        public double MilliSecond
+        {
+            get { return milliSecond; }
+            set
+            {
+                milliSecond = value;
+                if(this.Ticks.TickTypeValue == TickType.Smooth )
+                    SecondAngle = (Second + (milliSecond / 1000)) * 6;
+                else
+                    SecondAngle = Second * 6;
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs("MilliSecond"));
+            }
+        }
 
-		public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 	}
 
 }
