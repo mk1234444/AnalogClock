@@ -22,7 +22,7 @@ namespace AnalogClock
         Time time = new Time() ;
 
 
-		bool? DateAtBottom;
+		//bool? DateAtBottom;
 		public MainWindow()
 		{
             time.Ticks = ticks;
@@ -207,9 +207,8 @@ namespace AnalogClock
 			set
 			{
 				hourAngle = value;
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("HourAngle"));
-			}
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("HourAngle"));
+            }
 		}
 
 		
@@ -221,9 +220,8 @@ namespace AnalogClock
 			{
 				hour = value;
 				HourAngle = (hour + ((double)Minute / 60)) * 30;
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("Hour"));
-			}
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Hour"));
+            }
 		}
 
 
@@ -234,9 +232,8 @@ namespace AnalogClock
 			set
 			{
 				minuteAngle = value;
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("MinuteAngle"));
-			}
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MinuteAngle"));
+            }
 		}
 
 		private int m_minute;
@@ -247,9 +244,8 @@ namespace AnalogClock
 			{
 				m_minute = value;
 				MinuteAngle = (value+((double)Second/60))  * 6;
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("Minute"));
-			}
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Minute"));
+            }
 		}
 
 		double secondAngle;
@@ -258,9 +254,8 @@ namespace AnalogClock
 			private set 
 			{
 				secondAngle = value;
-				if(PropertyChanged !=null)
-					PropertyChanged(this,new PropertyChangedEventArgs("SecondAngle"));
-			}
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("SecondAngle"));
+            }
 		}
  
 		private int m_second;
@@ -271,9 +266,8 @@ namespace AnalogClock
 			{
 				m_second = value;
 				SecondAngle = value * 6;
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("Second"));
-              
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Second"));
+
             }
 		}
 
@@ -288,8 +282,7 @@ namespace AnalogClock
                     SecondAngle = (Second + (milliSecond / 1000)) * 6;
                 else
                     SecondAngle = Second * 6;
-                if (PropertyChanged != null)
-                    PropertyChanged(this, new PropertyChangedEventArgs("MilliSecond"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MilliSecond"));
             }
         }
 
